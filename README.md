@@ -1,2 +1,2 @@
-# StockBot
-A Discord Bot that helps keep track of top stocks from day to day
+# JobSearchBot
+A Discord Bot that helps find new job openings daily
