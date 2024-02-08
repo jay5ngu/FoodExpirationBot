@@ -1,23 +1,28 @@
 # to run file from command terminal (windows), type "py bot.py"
 import discord
 from discord.ext import commands
+import json
 
-BOT_TOKEN = "MTIwMzUyMzk1ODk1NjA5NzUzNg.GlInOR.IwKUEPFL0z0xruOHgm-DeiTNT935RNsCWR6JbA"
-TEST1_CHANNEL_ID = 1203872656743465070
-TEST2_CHANNEL_ID = 1205087561073172490
+try:
+    with open('secret.json') as file:
+        content = json.loads(file.read())
+    
+    bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
 
-bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+    @bot.event
+    async def on_ready():
+        print("Hello there! I'm the job search bot :)")
+        channel = bot.get_channel(content["TEST1_CHANNEL_ID"])
+        await channel.send("Job Searching Bot is here!")
 
-@bot.event
-async def on_ready():
-    print("Hello there! I'm the job search bot :)")
-    channel = bot.get_channel(TEST1_CHANNEL_ID)
-    await channel.send("Job Searching Bot is here!")
+    @bot.command()
+    async def nj(ctx, jobPosting):
+        test = bot.get_channel(content["TEST2_CHANNEL_ID"])
+        await test.send(jobPosting) # send to different channel
+        # await ctx.send(jobPosting) # send to same channel
 
-@bot.command()
-async def nj(ctx, jobPosting):
-    test = bot.get_channel(TEST2_CHANNEL_ID)
-    await test.send(jobPosting) # send to different channel
-    # await ctx.send(jobPosting) # send to same channel
+    bot.run(content["BOT_TOKEN"])
+    
+except FileNotFoundError:
+   print("File not found.")
 
-bot.run(BOT_TOKEN)
