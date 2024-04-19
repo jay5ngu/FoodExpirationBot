@@ -1,2 +1,2 @@
-# JobSearchBot
-A Discord Bot that helps find new job openings daily
+# FoodExpirationBot
+A Discord Bot that tracks when food is close to expiring and notifying users
