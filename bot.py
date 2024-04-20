@@ -1,45 +1,34 @@
 # to run file from command terminal (windows), type "py bot.py"
+# to run file from command terminal (mac), type "python3 bot.py"
 import discord
 from discord.ext import tasks, commands
 import datetime
 import json
 
 content = None
-utc = datetime.timezone.utc
-times = [
-    datetime.time(hour=6, minute=56, tzinfo=utc),
-    datetime.time(hour=12, minute=30, tzinfo=utc),
-    datetime.time(hour=18, minute=56, second=30, tzinfo=utc)
-]
 
 try:
+    # loads information from secret.json file
     with open('secret.json') as file:
         content = json.loads(file.read())
 
-    bot = commands.Bot(command_prefix="!", intents=discord.Intents.all())
+    # initiates discord bot which 
+    bot = commands.Bot(command_prefix="", intents=discord.Intents.all())
 
-    @tasks.loop(hours=6, minutes=58)
-    async def my_task():
-        print("My task is running!")
-        test = bot.get_channel(content["TEST2_CHANNEL_ID"])
-        await test.send("Task works!") # send to different channel
-
+    # will start action when bot is running to test environment 1
     @bot.event
     async def on_ready():
+        testEnv1 = bot.get_channel(content["TEST_ENV_1"])
         print("Hello there! I'm the job search bot :)")
-        channel = bot.get_channel(content["TEST1_CHANNEL_ID"])
-        await channel.send("Job Searching Bot is here!")
-        my_task.start()
+        await testEnv1.send("Job Searching Bot is here!")
 
+    # will send message to certain channel when command "item" typed followed by text
     @bot.command()
-    async def nj(ctx, jobPosting):
-        test = bot.get_channel(content["TEST2_CHANNEL_ID"])
-        await test.send(jobPosting) # send to different channel
-        # await ctx.send(jobPosting) # send to same channel
+    async def item(ctx, itemInfo):
+        testEnv2 = bot.get_channel(content["TEST_ENV_2"])
+        await testEnv2.send(itemInfo) # send to different channel
+        await ctx.send(itemInfo) # send to channel where command came from
     
-    @bot.command()
-    async def end(ctx):
-        my_task.cancel()
 
     bot.run(content["BOT_TOKEN"])    
 except FileNotFoundError:

@@ -1,6 +1,7 @@
 import requests
 import json
 
+# queries google open search api
 try:
     with open('secret.json') as file:
         content = json.loads(file.read())
