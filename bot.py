@@ -4,6 +4,7 @@ import discord
 from discord.ext import tasks, commands
 import datetime
 import json
+import re
 
 content = None
 
@@ -24,7 +25,19 @@ try:
 
     # will send message to certain channel when command "item" typed followed by text
     @bot.command()
-    async def item(ctx, itemInfo):
+    async def item(ctx, *args):
+        itemInfo = list(args)
+        pattern = r"^(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])/\d{2}$"
+        pattern_short = r"^(0?[1-9]|1[0-2])/\d{2}$"
+
+        # check if last value is expiration date
+        if re.match(pattern, itemInfo[-1]) or re.match(pattern_short, itemInfo[-1]):
+            expirationDate = itemInfo[-1]
+        else:
+            expirationDate = datetime.date.today()  # Otherwise, return today's date
+
+        print(expirationDate)
+
         testEnv2 = bot.get_channel(content["TEST_ENV_2"])
         await testEnv2.send(itemInfo) # send to different channel
         await ctx.send(itemInfo) # send to channel where command came from
