@@ -30,13 +30,22 @@ try:
         pattern = r"^(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])/\d{2}$"
         pattern_short = r"^(0?[1-9]|1[0-2])/\d{2}$"
 
-        # check if last value is expiration date
-        if re.match(pattern, itemInfo[-1]) or re.match(pattern_short, itemInfo[-1]):
-            expirationDate = itemInfo[-1]
+        # if last value is expiration date in the format m/d/yy
+        if re.match(pattern, itemInfo[-1]):
+            expirationDate = datetime.datetime.strptime(itemInfo[-1], "%m/%d/%y").date()
+            food = " ".join(itemInfo[0:len(itemInfo)-1])
+        # if last value is expiration date in the format m/d
+        elif re.match(pattern_short, itemInfo[-1]):
+            date = itemInfo[-1] + "/" + str(datetime.datetime.now().year)
+            expirationDate = datetime.datetime.strptime(date, "%m/%d/%Y").date()
+            food = " ".join(itemInfo[0:len(itemInfo)-1])
+        # if no expiration date listed
         else:
             expirationDate = datetime.date.today()  # Otherwise, return today's date
-
-        print(expirationDate)
+            food = " ".join(itemInfo)
+        
+        print("Expiration Date:", expirationDate)
+        print("Item:", food)
 
         testEnv2 = bot.get_channel(content["TEST_ENV_2"])
         await testEnv2.send(itemInfo) # send to different channel
