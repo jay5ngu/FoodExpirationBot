@@ -27,7 +27,9 @@ try:
     @bot.command()
     async def item(ctx, *args):
         itemInfo = list(args)
+        # format in mm/dd/yy
         pattern = r"^(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])/\d{2}$"
+        # format in mm/dd
         pattern_short = r"^(0?[1-9]|1[0-2])/\d{2}$"
 
         # if last value is expiration date in the format m/d/yy
@@ -41,7 +43,7 @@ try:
             food = " ".join(itemInfo[0:len(itemInfo)-1])
         # if no expiration date listed
         else:
-            expirationDate = datetime.date.today()  # Otherwise, return today's date
+            expirationDate = datetime.date.today() + datetime.timedelta(days=2)  # Otherwise, default two days till expire
             food = " ".join(itemInfo)
         
         print("Expiration Date:", expirationDate)
