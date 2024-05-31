@@ -2,6 +2,12 @@ import json
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import datetime
+import re
+
+# date format in mm/dd/yy
+pattern = r"^(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])/\d{2}$"
+# date format in mm/dd
+pattern_short = r"^(0?[1-9]|1[0-2])/\d{2}$"
 
 class Database:
     def __init__(self) -> None:
@@ -21,7 +27,6 @@ class Database:
         try:
             # Send a ping to confirm a successful connection
             self.client.admin.command('ping')
-            print("Pinged your deployment. You successfully connected to MongoDB!")
             return True
         except Exception as e:
             print("testConnection Error:", e)
@@ -38,23 +43,25 @@ class Database:
             print("Document found:")
             print(f"\tName: {name}")
             print(f"\tExpiration Date: {expiration}")
+            return True
 
         except Exception as e:
             print("findItem Error", e)
+            return False
 
-    def insertItem(self, item, expirationDate):
+    def insertItem(self, itemInfo):
+        item, expirationDate = self.processInfo(itemInfo)
+
         try:
-            expirationDate = datetime.datetime(expirationDate.year, expirationDate.month, expirationDate.day)
             self.collection.insert_one({"item" : item, "expirationDate" : expirationDate})
-            print("Item inserted!")
+            return True
         except Exception as e:
             print("insertItem Error", e)
+            return False
 
 
     def checkExpiration(self, date):
         try:
-            date = datetime.datetime(date.year, date.month, date.day)
-
             # find documents
             result = self.collection.find({"expirationDate" : date})
 
@@ -70,9 +77,32 @@ class Database:
         except Exception as e:
             print("checkExpiration Error:", e)
 
+    def processInfo(self, itemInfo):
+        # if last value is expiration date in the format m/d/yy
+        if re.match(pattern, itemInfo[-1]):
+            expirationDate = datetime.datetime.strptime(itemInfo[-1], "%m/%d/%y").date()
+            item = " ".join(itemInfo[0:len(itemInfo)-1])
+
+        # if last value is expiration date in the format m/d
+        elif re.match(pattern_short, itemInfo[-1]):
+            date = itemInfo[-1] + "/" + str(datetime.datetime.now().year)
+            expirationDate = datetime.datetime.strptime(date, "%m/%d/%Y").date()
+            item = " ".join(itemInfo[0:len(itemInfo)-1])
+
+        # if no expiration date listed
+        else:
+            # Otherwise, default two days till expire
+            expirationDate = datetime.date.today() + datetime.timedelta(days=2)
+            expirationDate = datetime.datetime(expirationDate.year, expirationDate.month, expirationDate.day)
+            item = " ".join(itemInfo)
+        
+        return item, expirationDate
+
 if __name__ == "__main__":
     db = Database()
     # print(db.testConnection())
     # print(db.findItem("raising canes"))
     # db.insertItem("apple", datetime.date.today())
-    # db.checkExpiration(datetime.date.today())
+    # today = datetime.date.today()
+    # today = datetime.datetime(today.year, today.month, today.day)
+    # db.checkExpiration(today)
