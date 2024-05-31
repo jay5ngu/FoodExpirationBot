@@ -1,5 +1,7 @@
 # to run file from command terminal (windows), type "py bot.py"
 # to run file from command terminal (mac), type "python3 bot.py"
+# to install libraries, use command "py -m pip install item_name"
+
 import discord
 from discord.ext import tasks, commands
 import datetime
