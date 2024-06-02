@@ -59,8 +59,8 @@ class Database:
             print("insertItem Error", e)
             return False
 
-
     def checkExpiration(self, date):
+        expiringItems = []
         try:
             # find documents
             result = self.collection.find({"expirationDate" : date})
@@ -68,14 +68,36 @@ class Database:
             if result:
                 print("Documents found!")
                 for r in result:
-                    # print results
-                    print(f"Name: {r['item']}")
-                    print(f"Expiration Date: {r['expirationDate']}")
+                    # retrieve items
+                    expiringItems.append(r['item'])
             else:
                 print("No data records found")
 
         except Exception as e:
             print("checkExpiration Error:", e)
+
+        finally:
+            return expiringItems
+
+    def oldExpirations(self, date):
+        expiredItems = []
+        try:
+            # find documents
+            result = self.collection.find({"expirationDate" : {"$lt": date}})
+
+            if result:
+                print("Documents found!")
+                for r in result:
+                    # retrieve items
+                    expiredItems.append(r['item'])
+            else:
+                print("No data records found")
+
+        except Exception as e:
+            print("oldExpirations Error:", e)
+        
+        finally:
+            return expiredItems
 
     def processInfo(self, itemInfo):
         # if last value is expiration date in the format m/d/yy
@@ -105,4 +127,5 @@ if __name__ == "__main__":
     # db.insertItem("apple", datetime.date.today())
     # today = datetime.date.today()
     # today = datetime.datetime(today.year, today.month, today.day)
-    # db.checkExpiration(today)
+    # print(db.checkExpiration(today))
+    # print(db.oldExpirations(today))

@@ -1,3 +1,4 @@
 secret.json
 notes.txt
-/venv
+turbo.py
+/__pycache__
