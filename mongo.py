@@ -11,17 +11,23 @@ pattern_short = r"^(0?[1-9]|1[0-2])/\d{2}$"
 
 class Database:
     def __init__(self) -> None:
-        # loads information from secret.json file
-        with open('secret.json') as file:
-            self.content = json.loads(file.read())
+        try:
+            # loads information from secret.json file
+            with open('secret.json') as file:
+                self.content = json.loads(file.read())
 
-        self.url = f"mongodb+srv://{self.content["mongoUser"]}:{self.content["mongoPassword"]}@foodexpirationbot.qiyd0o8.mongodb.net/?retryWrites=true&w=majority&appName=FoodExpirationBot"
+            self.url = f"mongodb+srv://{self.content["mongoUser"]}:{self.content["mongoPassword"]}@foodexpirationbot.qiyd0o8.mongodb.net/?retryWrites=true&w=majority&appName=FoodExpirationBot"
 
-        # Create a new client and connect to the server
-        self.client = MongoClient(self.url, server_api=ServerApi('1'))
+            # Create a new client and connect to the server
+            self.client = MongoClient(self.url, server_api=ServerApi('1'))
 
-        # Store collection in class
-        self.collection = self.client["foodExpirationBot"]["expirationDate"] 
+            # Store collection in class
+            self.collection = self.client["foodExpirationBot"]["expirationDate"] 
+        except FileNotFoundError:
+            print("File not found.")
+            self.url = None
+            self.client = None
+            self.collection = None
 
     def testConnection(self):
         try:
@@ -36,11 +42,13 @@ class Database:
         try:
             # find documents 
             result = self.collection.find_one({ "item": item })
+            id = result["_id"]
             name = result["item"]
             expiration = result["expirationDate"]
 
             # print results
             print("Document found:")
+            print(f"\tID: {id}")
             print(f"\tName: {name}")
             print(f"\tExpiration Date: {expiration}")
             return True
@@ -58,47 +66,7 @@ class Database:
         except Exception as e:
             print("insertItem Error", e)
             return False
-
-    def checkExpiration(self, date):
-        expiringItems = []
-        try:
-            # find documents
-            result = self.collection.find({"expirationDate" : date})
-
-            if result:
-                print("Documents found!")
-                for r in result:
-                    # retrieve items
-                    expiringItems.append(r['item'])
-            else:
-                print("No data records found")
-
-        except Exception as e:
-            print("checkExpiration Error:", e)
-
-        finally:
-            return expiringItems
-
-    def oldExpirations(self, date):
-        expiredItems = []
-        try:
-            # find documents
-            result = self.collection.find({"expirationDate" : {"$lt": date}})
-
-            if result:
-                print("Documents found!")
-                for r in result:
-                    # retrieve items
-                    expiredItems.append(r['item'])
-            else:
-                print("No data records found")
-
-        except Exception as e:
-            print("oldExpirations Error:", e)
-        
-        finally:
-            return expiredItems
-
+    
     def processInfo(self, itemInfo):
         # if last value is expiration date in the format m/d/yy
         if re.match(pattern, itemInfo[-1]):
@@ -120,12 +88,39 @@ class Database:
         
         return item, expirationDate
 
+    def checkExpiration(self, date):
+        expiringItems = []
+        try:
+            # find documents
+            result = self.collection.find({"expirationDate" : date})
+
+            if result:
+                for r in result:
+                    # retrieve items
+                    expiringItems.append(r['item'])
+
+        except Exception as e:
+            print("checkExpiration Error:", e)
+
+        finally:
+            return expiringItems
+
+    def deleteOldExpirations(self, date):
+        try:
+            # find documents
+            result = self.collection.delete_many({"expirationDate" : {"$lt": date}})
+
+            print(f"{result.deleted_count} items deleted")
+
+        except Exception as e:
+            print("oldExpirations Error:", e)
+
 if __name__ == "__main__":
     db = Database()
     # print(db.testConnection())
-    # print(db.findItem("raising canes"))
+    # print(db.findItem("milk"))
     # db.insertItem("apple", datetime.date.today())
     # today = datetime.date.today()
     # today = datetime.datetime(today.year, today.month, today.day)
     # print(db.checkExpiration(today))
-    # print(db.oldExpirations(today))
+    # db.deleteOldExpirations(today)
