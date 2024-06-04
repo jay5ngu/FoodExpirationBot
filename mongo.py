@@ -2,6 +2,7 @@ import json
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import datetime
+from collections import defaultdict
 import re
 
 # date format in mm/dd/yy
@@ -91,15 +92,14 @@ class Database:
         return item, expirationDate
 
     def checkExpiration(self, date):
-        expiringItems = []
+        expiringItems = defaultdict(list)
         try:
             # find documents
             result = self.collection.find({"expirationDate" : date})
 
-            if result:
-                for r in result:
-                    # retrieve items
-                    expiringItems.append((r['username'], r['item']))
+            for r in result:
+                # retrieve items
+                expiringItems[r['username']].append(r['item'])
 
         except Exception as e:
             print("checkExpiration Error:", e)
