@@ -1,4 +1,5 @@
 secret.json
 notes.txt
 turbo.py
+/.venv
 /__pycache__
