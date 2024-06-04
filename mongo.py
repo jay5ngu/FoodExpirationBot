@@ -43,13 +43,15 @@ class Database:
             # find documents 
             result = self.collection.find_one({ "item": item })
             id = result["_id"]
-            name = result["item"]
+            username = result["username"]
+            food = result["item"]
             expiration = result["expirationDate"]
 
             # print results
             print("Document found:")
             print(f"\tID: {id}")
-            print(f"\tName: {name}")
+            print(f"\tUsername: {username}")
+            print(f"\tFood: {food}")
             print(f"\tExpiration Date: {expiration}")
             return True
 
@@ -57,11 +59,11 @@ class Database:
             print("findItem Error", e)
             return False
 
-    def insertItem(self, itemInfo):
+    def insertItem(self, username, itemInfo):
         item, expirationDate = self.processInfo(itemInfo)
 
         try:
-            self.collection.insert_one({"item" : item, "expirationDate" : expirationDate})
+            self.collection.insert_one({"username" : username, "item" : item, "expirationDate" : expirationDate})
             return True
         except Exception as e:
             print("insertItem Error", e)
@@ -97,7 +99,7 @@ class Database:
             if result:
                 for r in result:
                     # retrieve items
-                    expiringItems.append(r['item'])
+                    expiringItems.append((r['username'], r['item']))
 
         except Exception as e:
             print("checkExpiration Error:", e)
