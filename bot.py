@@ -25,8 +25,8 @@ try:
     # will start action when bot is running to test environment 1
     @bot.event
     async def on_ready():
-        # foodChannel = bot.get_channel(content["FOOD_CHANNEL"])
-        foodChannel = bot.get_channel(content["TEST_ENV_1"])
+        foodChannel = bot.get_channel(content["FOOD_CHANNEL"])
+        # foodChannel = bot.get_channel(content["TEST_ENV_1"])
         await foodChannel.send("Food Expiration Bot is here!")
         check_expirations.start()
 
@@ -75,14 +75,17 @@ try:
         # won't start rest of code until scheduled time comes
         await asyncio.sleep((scheduledTime - now).total_seconds())
 
-        # expirationChannel = bot.get_channel(content["EXPIRATION_CHANNEL"])
-        expirationChannel = bot.get_channel(content["TEST_ENV_2"])
+        expirationChannel = bot.get_channel(content["EXPIRATION_CHANNEL"])
+        # expirationChannel = bot.get_channel(content["TEST_ENV_2"])
 
         # run code to check for any expiring items today
         today = datetime.date.today()
         expiresToday = db.checkExpiration(datetime.datetime(today.year, today.month, today.day))
-        for item in expiresToday:
-            await expirationChannel.send(f"{item[0]} {item[1]} expires today!")
+        for user in expiresToday:
+            message = f"{user} The following items expire today:\n"
+            for item in expiresToday[user]:
+                message += f"- {item}\n"
+            await expirationChannel.send(message)
 
         # delete any old items that have already expired
         db.deleteExpiredItems(datetime.datetime(today.year, today.month, today.day))
@@ -90,8 +93,11 @@ try:
         # run code to check for any expiring items within the next two days
         today += datetime.timedelta(days=2)
         expiresLater = db.checkExpiration(datetime.datetime(today.year, today.month, today.day))
-        for item in expiresLater:
-            await expirationChannel.send(f"{item[0]} {item[1]} expires in two days!")
+        for user in expiresLater:
+            message = f"{user} The following items expire in two days:\n"
+            for item in expiresLater[user]:
+                message += f"- {item}\n"
+            await expirationChannel.send(message)
 
     bot.run(content["BOT_TOKEN"])    
 
