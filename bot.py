@@ -34,11 +34,36 @@ try:
     @bot.command()
     async def item(ctx, *args):
         username = ctx.author.mention
-        itemInfo = list(args)
+        itemInfo = [words for words in args]
         inserted = db.insertItem(username, itemInfo)
         if inserted:
-            await ctx.send(f"{username} Item inserted!") # send to channel where command came from
+            await ctx.send(f"Item inserted!") # send to channel where command came from
     
+    # lists all the current items you have stored in your account
+    @bot.command()
+    async def list(ctx):
+        username = ctx.author.mention
+        items = db.listItems(username)
+        if len(items) == 0:
+            await ctx.send("There are no items under your account")
+        else:
+            itemList = "You have the following items:\n"
+            for item in items:
+                itemList += f"\t{item[0]} ({item[1].month}/{item[1].day})\n"
+            await ctx.send(itemList)
+
+    # deletes an item in your account
+    @bot.command()
+    async def delete(ctx, item):
+        username = ctx.author.mention
+        deleted = db.deleteItem(username, item)
+        if deleted != 0:
+            await ctx.send(f"{item} has been removed from your account!")
+        else:
+            await ctx.send("Item does not exist under your account")
+
+
+    # loop checks for expiring items and deletes expired items
     @tasks.loop(hours=24)
     async def check_expirations():
         # initializes loop for 9am everyday
@@ -60,7 +85,7 @@ try:
             await expirationChannel.send(f"{item[0]} {item[1]} expires today!")
 
         # delete any old items that have already expired
-        db.deleteOldExpirations(datetime.datetime(today.year, today.month, today.day))
+        db.deleteExpiredItems(datetime.datetime(today.year, today.month, today.day))
 
         # run code to check for any expiring items within the next two days
         today += datetime.timedelta(days=2)

@@ -38,35 +38,34 @@ class Database:
             print("testConnection Error:", e)
             return False
         
-    def findItem(self, item):
+    def listItems(self, username):
+        items = []
         try:
             # find documents 
-            result = self.collection.find_one({ "item": item })
-            id = result["_id"]
-            username = result["username"]
-            food = result["item"]
-            expiration = result["expirationDate"]
+            result = self.collection.find({"username" : username })
 
-            # print results
-            print("Document found:")
-            print(f"\tID: {id}")
-            print(f"\tUsername: {username}")
-            print(f"\tFood: {food}")
-            print(f"\tExpiration Date: {expiration}")
+            if result:
+                for r in result:
+                    items.append((r["item"], r["expirationDate"]))
             return True
 
         except Exception as e:
-            print("findItem Error", e)
+            print("listItems Error", e)
             return False
+        
+        finally:
+            return items
 
     def insertItem(self, username, itemInfo):
-        item, expirationDate = self.processInfo(itemInfo)
-
-        try:
-            self.collection.insert_one({"username" : username, "item" : item, "expirationDate" : expirationDate})
-            return True
-        except Exception as e:
-            print("insertItem Error", e)
+        if len(itemInfo) != 0:
+            try:
+                item, expirationDate = self.processInfo(itemInfo)
+                result = self.collection.insert_one({"username" : username, "item" : item, "expirationDate" : expirationDate})
+                return result.acknowledged
+            except Exception as e:
+                print("insertItem Error", e)
+                return False
+        else:
             return False
     
     def processInfo(self, itemInfo):
@@ -89,6 +88,10 @@ class Database:
             item = " ".join(itemInfo)
         
         return item, expirationDate
+    
+    def deleteItem(self, username, item):
+        result = self.collection.delete_one({"username" : username, "item" : item})
+        return result.deleted_count
 
     def checkExpiration(self, date):
         expiringItems = []
@@ -107,7 +110,7 @@ class Database:
         finally:
             return expiringItems
 
-    def deleteOldExpirations(self, date):
+    def deleteExpiredItems(self, date):
         try:
             # find documents
             result = self.collection.delete_many({"expirationDate" : {"$lt": date}})
