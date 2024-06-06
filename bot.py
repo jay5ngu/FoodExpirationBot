@@ -37,7 +37,9 @@ try:
         itemInfo = [words for words in args]
         inserted = db.insertItem(username, itemInfo)
         if inserted:
-            await ctx.send(f"Item inserted!") # send to channel where command came from
+            await ctx.send("Item inserted!")
+        else:
+            await ctx.send("Unable to add item")
     
     # lists all the current items you have stored in your account
     @bot.command()
@@ -49,13 +51,14 @@ try:
         else:
             itemList = "You have the following items:\n"
             for item in items:
-                itemList += f"\t{item[0]} ({item[1].month}/{item[1].day})\n"
+                itemList += f"- {item[0]} ({item[1].month}/{item[1].day})\n"
             await ctx.send(itemList)
 
     # deletes an item in your account
     @bot.command()
-    async def delete(ctx, item):
+    async def delete(ctx, *args):
         username = ctx.author.mention
+        item = " ".join([words for words in args])
         deleted = db.deleteItem(username, item)
         if deleted != 0:
             await ctx.send(f"{item} has been removed from your account!")
