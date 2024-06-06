@@ -8,7 +8,7 @@ import re
 # date format in mm/dd/yy
 pattern = r"^(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])/\d{2}$"
 # date format in mm/dd
-pattern_short = r"^(0?[1-9]|1[0-2])/\d{2}$"
+pattern_short = r"^(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])$" # r"^(0?[1-9]|1[0-2])/\d{2}$"
 
 class Database:
     def __init__(self) -> None:
@@ -72,13 +72,13 @@ class Database:
     def processInfo(self, itemInfo):
         # if last value is expiration date in the format m/d/yy
         if re.match(pattern, itemInfo[-1]):
-            expirationDate = datetime.datetime.strptime(itemInfo[-1], "%m/%d/%y").date()
+            expirationDate = datetime.datetime.strptime(itemInfo[-1], "%m/%d/%y")
             item = " ".join(itemInfo[0:len(itemInfo)-1])
 
         # if last value is expiration date in the format m/d
         elif re.match(pattern_short, itemInfo[-1]):
             date = itemInfo[-1] + "/" + str(datetime.datetime.now().year)
-            expirationDate = datetime.datetime.strptime(date, "%m/%d/%Y").date()
+            expirationDate = datetime.datetime.strptime(date, "%m/%d/%Y")
             item = " ".join(itemInfo[0:len(itemInfo)-1])
 
         # if no expiration date listed
@@ -113,9 +113,9 @@ class Database:
     def deleteExpiredItems(self, date):
         try:
             # find documents
-            result = self.collection.delete_many({"expirationDate" : {"$lt": date}})
+            self.collection.delete_many({"expirationDate" : {"$lt": date}})
 
-            print(f"{result.deleted_count} items deleted")
+            # print(f"{result.deleted_count} items deleted")
 
         except Exception as e:
             print("oldExpirations Error:", e)
