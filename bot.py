@@ -6,7 +6,8 @@ import discord
 from discord.ext import tasks, commands
 import datetime
 import json
-from mongo import Database
+# from mongo import Database
+from cockroach import Database
 import asyncio
 
 # contains secret keys
