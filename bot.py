@@ -23,11 +23,22 @@ try:
     # initiates discord bot which 
     bot = commands.Bot(command_prefix="", intents=discord.Intents.all())
 
+    # @bot.tree.command(name="item", description="Add an item and optional expiration day")
+    # async def item(interaction:discord.interactions): # , *args
+    #     print(interaction.user)
+    #     # username = interaction.author.mention
+    #     # itemInfo = [words for words in args]
+    #     inserted = True # db.insertItem(username, itemInfo)
+    #     if inserted:
+    #         await interaction.response.send_message("Item inserted!")
+    #     else:
+    #         await interaction.response.send_message("Unable to add item")
+
     # will start action when bot is running to test environment 1
     @bot.event
     async def on_ready():
         foodChannel = bot.get_channel(content["FOOD_CHANNEL"])
-        # foodChannel = bot.get_channel(content["TEST_ENV_1"])
+        # await bot.tree.sync()
         await foodChannel.send("Food Expiration Bot is here!")
         check_expirations.start()
 
