@@ -17,7 +17,7 @@ class Database:
             with open('secret.json') as file:
                 self.content = json.loads(file.read())
 
-            self.url = f"mongodb+srv://{self.content["mongoUser"]}:{self.content["mongoPassword"]}@foodexpirationbot.qiyd0o8.mongodb.net/?retryWrites=true&w=majority&appName=FoodExpirationBot"
+            self.url = f"mongodb+srv://{self.content['mongoUser']}:{self.content['mongoPassword']}@foodexpirationbot.qiyd0o8.mongodb.net/?retryWrites=true&w=majority&appName=FoodExpirationBot"
 
             # Create a new client and connect to the server
             self.client = MongoClient(self.url, server_api=ServerApi('1'))
@@ -122,7 +122,7 @@ class Database:
 
 if __name__ == "__main__":
     db = Database()
-    # print(db.testConnection())
+    print(db.testConnection())
     # print(db.findItem("milk"))
     # db.insertItem("apple", datetime.date.today())
     # today = datetime.date.today()
