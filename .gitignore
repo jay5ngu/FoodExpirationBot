@@ -3,3 +3,4 @@ notes.txt
 turbo.py
 /.venv
 /__pycache__
+.env

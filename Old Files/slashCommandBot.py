@@ -1,59 +1,49 @@
 import discord
 from discord.ext import tasks, commands
 import datetime
-import json
 import asyncio
 from cockroach import Database
-# from discord import app_commands
-# from mongo import Database
+from dotenv import load_dotenv
+import typing
+import os
+from discord import app_commands
 
 class FoodExpirationBot:
     def __init__(self) -> None:
-        self.content = self.load_secrets()        
-        if not self.content:
-            print("Secret file not found or could not be loaded. Exiting...")
-            return
-
         # Initialize bot and database
         self.bot = commands.Bot(command_prefix="", intents=discord.Intents.default())
         self.db = Database()
 
         # Set up the command tree (no need for this because structure already exists)
-        # self.bot.tree = app_commands.CommandTree(self.bot)
+        self.bot.tree = app_commands.CommandTree(self.bot)
 
         # Register bot events and commands
         self.setup()
-
-    def load_secrets(self):
-        try:
-            with open('secret.json') as file:
-                return json.loads(file.read())
-        except FileNotFoundError:
-            print("File not found.")
-            return None
 
     def setup(self):
         # Register events
         self.bot.event(self.on_ready)
 
-        # Register commands
-        self.bot.tree.command(name="item", description="Add a new food item with an expiration date")(self.add_item)
-        self.bot.tree.command(name="list", description="List all items in your account")(self.list_items)
-        self.bot.tree.command(name="delete", description="Delete an item from your account")(self.delete_item)
-
     async def on_ready(self):
-        food_channel = self.bot.get_channel(self.content["FOOD_CHANNEL"])
-        await self.bot.tree.sync(guild=discord.Object(id=self.content["SERVER_GUILD"]))
-        await food_channel.send("Food Expiration Bot is here!")
+        # Register commands
+        self.bot.tree.command(name="item", description="Add a TEST new food item with an expiration date")(self.add_item)
+        self.bot.tree.command(name="list", description="List all TEST items in your account")(self.list_items)
+        self.bot.tree.command(name="delete", description="Delete an TEST item from your account")(self.delete_item)
 
-    async def add_item(self, interaction: discord.Interaction, item_name: str, expiration_date: str = None):
+        discordGuild = discord.Object(id=int(os.getenv("SERVER_GUILD")))
+        self.bot.tree.clear_commands(guild=discordGuild)
+        await self.bot.tree.sync(guild=discordGuild)
+        foodChannel = self.bot.get_channel(int(os.getenv("FOOD_CHANNEL")))
+        await foodChannel.send("Food Expiration Bot is here!")
+
+    async def add_item(self, interaction: discord.Interaction, item_name: str, expiration_date: typing.Optional[str] = None):
         username = interaction.user.mention
-        item_info = [item_name, expiration_date]
-        inserted = self.db.insertItem(username, item_info)
+        itemInfo = [item_name, expiration_date]
+        inserted = self.db.insertItem(username, itemInfo)
         if inserted:
             await interaction.response.send_message("Item inserted!")
         else:
-            await interaction.response.send_message("Unable to add item")
+            await interaction.response.send_message("Unable to add item. Please make sure expiration date is valid entry.")
 
     async def list_items(self, interaction: discord.Interaction):
         username = interaction.user.mention
@@ -61,10 +51,10 @@ class FoodExpirationBot:
         if len(items) == 0:
             await interaction.response.send_message("There are no items under your account")
         else:
-            item_list = "You have the following items:\n"
+            itemList = "You have the following items:\n"
             for item in items:
-                item_list += f"- {item[0]} ({item[1].month}/{item[1].day}/{item[1].year})\n"
-            await interaction.response.send_message(item_list)
+                itemList += f"- {item[0]} ({item[1].month}/{item[1].day}/{item[1].year})\n"
+            await interaction.response.send_message(itemList)
 
     async def delete_item(self, interaction: discord.Interaction, item_name: str):
         username = interaction.user.mention
@@ -77,21 +67,19 @@ class FoodExpirationBot:
     @tasks.loop(hours=24)
     async def check_expirations(self):
         now = datetime.datetime.now()
-        scheduled_time = now.replace(hour=9, minute=0, second=0, microsecond=0)
-        if now > scheduled_time:
-            scheduled_time += datetime.timedelta(days=1)
+        scheduledTime = now.replace(hour=9, minute=0, second=0, microsecond=0)
+        if now > scheduledTime:
+            scheduledTime += datetime.timedelta(days=1)
 
-        await asyncio.sleep((scheduled_time - now).total_seconds())
-
-        expiration_channel = self.bot.get_channel(self.content["EXPIRATION_CHANNEL"])
+        await asyncio.sleep((scheduledTime - now).total_seconds())
 
         today = datetime.date.today()
-        expires_today = self.db.checkExpiration(datetime.datetime(today.year, today.month, today.day))
-        for user in expires_today:
+        expiresToday = self.db.checkExpiration(datetime.datetime(today.year, today.month, today.day))
+        for user in expiresToday:
             message = f"{user} The following items expire today:\n"
-            for item in expires_today[user]:
+            for item in expiresToday[user]:
                 message += f"- {item}\n"
-            await expiration_channel.send(message)
+            await self.expirationChannel.send(message)
 
         self.db.deleteExpiredItems(datetime.datetime(today.year, today.month, today.day))
 
@@ -101,11 +89,12 @@ class FoodExpirationBot:
             message = f"{user} The following items expire in two days:\n"
             for item in expires_later[user]:
                 message += f"- {item}\n"
-            await expiration_channel.send(message)
+            expirationChannel = self.bot.get_channel(int(os.getenv("EXPIRATION_CHANNEL")))
+            await expirationChannel.send(message)
 
     def run(self):
-        if self.content:
-            self.bot.run(self.content["BOT_TOKEN"])
+        if os.getenv("BOT_TOKEN"):
+            self.bot.run(os.getenv("BOT_TOKEN"))
             
         # Start the expiration check loop
         if not self.check_expirations.is_running():
@@ -113,5 +102,6 @@ class FoodExpirationBot:
 
 
 if __name__ == "__main__":
+    load_dotenv()  # take environment variables from .env.
     bot = FoodExpirationBot()
     bot.run()

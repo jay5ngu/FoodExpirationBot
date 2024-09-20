@@ -2,29 +2,24 @@ import os
 import psycopg2
 from collections import defaultdict
 import re
-import json
 import datetime
+from dotenv import load_dotenv
 
 # date format in mm/dd/yy
 pattern = r"^(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])/\d{2}$"
 # date format in mm/dd
 pattern_short = r"^(0?[1-9]|1[0-2])/(0?[1-9]|[12][0-9]|3[01])$" # r"^(0?[1-9]|1[0-2])/\d{2}$"
 
+load_dotenv()  # take environment variables from .env.
 
 class Database:
     def __init__(self) -> None:
         try:
-            # loads information from secret.json file
-            # with open('secret.json') as file:
-            #     self.content = json.loads(file.read())
-            # self.url = self.content['cockroachURL']
-            # self.client = psycopg2.connect(self.url)
-
-            self.client = psycopg2.connect(os.environ["DATABASE_URL"])
-            
+            self.url = os.getenv("cockroachURL")
+            self.client = psycopg2.connect(self.url)            
         except FileNotFoundError:
             print("File not found.")
-            # self.url = None
+            self.url = None
             self.client = None
 
     def testConnection(self):
@@ -70,6 +65,9 @@ class Database:
         if len(itemInfo) != 0:
             try:
                 item, expirationDate = self.processInfo(itemInfo)
+                today = datetime.datetime(datetime.date.today().year, datetime.date.today().month, datetime.date.today().day)
+                if expirationDate < today:
+                    raise Exception
                 with self.client.cursor() as conn:
                     # format for SQL needs to be like this '2024-08-27'
                     conn.execute(f"INSERT INTO foodExpirationDate (username, item, expirationDate) VALUES ('{username}', '{item}', '{expirationDate}')")
@@ -86,7 +84,7 @@ class Database:
         with self.client.cursor() as conn:
             conn.execute(f"DELETE FROM foodExpirationDate WHERE username='{username}' AND item='{item}'")
             self.client.commit()
-        return True
+            return conn.rowcount > 0
 
     def checkExpiration(self, date):
         expiringItems = defaultdict(list)
